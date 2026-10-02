@@ -163,7 +163,7 @@ class _NurseSelfSignupPageState extends State<NurseSelfSignupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.primarylight,
-      appBar: AppBar(title: const Text("Nurse Self Signup"), centerTitle: true),
+      appBar: AppBar(title: const Text("Apply for Job"), centerTitle: true),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(

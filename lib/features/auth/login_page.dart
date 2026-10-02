@@ -380,8 +380,8 @@ class _LoginCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRoutes.nurseSignup),
-                  icon: const Icon(Icons.badge_outlined),
-                  label: const Text('APPLY AS A CAREGIVER'),
+                  icon: const Icon(Icons.work_outline),
+                  label: const Text('APPLY FOR JOB'),
                 ),
               ),
               const SizedBox(height: 20),
