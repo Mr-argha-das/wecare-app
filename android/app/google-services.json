@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "798855635324",
+    "project_id": "wecare360-69714",
+    "storage_bucket": "wecare360-69714.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:798855635324:android:235644a5da2d746bb744f9",
+        "android_client_info": {
+          "package_name": "com.wecare.newapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCDSDEQ6j0BWVNADaHfvCW3EKJDjmZtjOc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
