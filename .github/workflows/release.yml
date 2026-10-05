@@ -49,6 +49,12 @@ on:
         required: false
         default: ""
   push:
+    # TEMPORARY: is branch par push hote hi build chal jaye.
+    # (Arena agent ke token ke paas 'actions: write' nahi hai, isliye
+    #  manually run trigger nahi ho sakta - push hi trigger hai.)
+    # .aab deliver hone ke baad ye branch filter hata denge.
+    branches:
+      - arena/01a10c30-wecare-app
     tags:
       - "v*"
 
