@@ -76,17 +76,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check required secrets
+      - name: Detect signing mode
+        id: signing
         env:
           STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          if [ -z "${STORE_PASSWORD:-}" ]; then
-            echo "::error title=Missing secret::Secret 'KEYSTORE_PASSWORD' set nahi hai."
-            echo "Settings -> Secrets and variables -> Actions -> New repository secret"
-            echo "Name: KEYSTORE_PASSWORD   Value: <aapke keystore ka store password>"
+          set -euo pipefail
+          if [ -f android/key.properties ]; then
+            echo "mode=repo" >> "$GITHUB_OUTPUT"
+            echo "Signing mode: REPO - android/key.properties repo me commit hai."
+            echo "::warning title=key.properties repo me hai::Signing credentials repo ke andar commit hain. Repo public hua to signing key compromise ho jayegi. Behtar: KEYSTORE_BASE64 + KEYSTORE_PASSWORD secrets."
+          elif [ -n "${STORE_PASSWORD:-}" ]; then
+            echo "mode=secret" >> "$GITHUB_OUTPUT"
+            echo "Signing mode: SECRET - GitHub Secrets se."
+          else
+            echo "::error title=Signing credentials nahi mile::Na android/key.properties repo me hai, na KEYSTORE_PASSWORD secret set hai."
+            echo "Do me se ek karein:"
+            echo "  1. android/key.properties commit karein (storePassword/keyPassword/keyAlias/storeFile)"
+            echo "  2. Settings -> Secrets and variables -> Actions me KEYSTORE_PASSWORD add karein"
             exit 1
           fi
-          echo "KEYSTORE_PASSWORD mil gaya."
 
       # ---------------------------------------------------------------
       #  push-tag par inputs khali hote hain, isliye defaults yahin tay
@@ -140,6 +149,7 @@ jobs:
       # ---------------------------------------------------------------
       - name: Resolve keystore
         id: keystore
+        if: steps.signing.outputs.mode == 'secret'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
@@ -170,6 +180,7 @@ jobs:
       # ---------------------------------------------------------------
       - name: Inspect keystore and resolve alias
         id: alias
+        if: steps.signing.outputs.mode == 'secret'
         env:
           STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           ALIAS_SECRET: ${{ secrets.KEY_ALIAS }}
@@ -214,7 +225,7 @@ jobs:
                    -alias "$WANT" 2>/dev/null)
 
           OWNER=$(printf '%s\n' "$CERT" | sed -n 's/^Owner: *//p' | head -1)
-          echo "owner=$OWNER" >> "$GITHUB_OUTPUT"
+          echo "EXPECTED_OWNER=$OWNER" >> "$GITHUB_ENV"
 
           echo "--- Certificate (Firebase / Play Console ke liye) ---"
           printf '%s\n' "$CERT" | grep -E "^Owner:|^Valid from:|SHA1:|SHA256:" | head -6
@@ -225,6 +236,7 @@ jobs:
       #  Backslash escape zaroori hai (Java .properties format).
       # ---------------------------------------------------------------
       - name: Create android/key.properties
+        if: steps.signing.outputs.mode == 'secret'
         env:
           STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -252,6 +264,72 @@ jobs:
               -e 's/\(keyPassword=\).*/\1***/' android/key.properties
 
       # ---------------------------------------------------------------
+      # ---------------------------------------------------------------
+      #  REPO mode: key.properties pehle se repo me hai. Use padhkar
+      #  keystore validate karte hain, taaki galat password/alias ka
+      #  pata Gradle ke cryptic error se pehle chal jaye.
+      # ---------------------------------------------------------------
+      - name: Validate committed key.properties
+        if: steps.signing.outputs.mode == 'repo'
+        run: |
+          set -uo pipefail
+
+          prop() {
+            grep -m1 "^$1=" android/key.properties | cut -d= -f2- | sed -e 's/\\\(.\)/\1/g'
+          }
+          STORE_FILE=$(prop storeFile)
+          STORE_PW=$(prop storePassword)
+          KEY_PW=$(prop keyPassword)
+          ALIAS=$(prop keyAlias)
+
+          # passwords ko log me mask karo
+          [ -n "$STORE_PW" ] && echo "::add-mask::$STORE_PW"
+          [ -n "$KEY_PW" ]   && echo "::add-mask::$KEY_PW"
+
+          for f in storeFile storePassword keyPassword keyAlias; do
+            if ! grep -q "^$f=" android/key.properties; then
+              echo "::error title=key.properties adhoori hai::'$f' missing hai."
+              exit 1
+            fi
+          done
+
+          # storeFile relative ho to wo android/app/ se resolve hota hai
+          case "$STORE_FILE" in
+            /*) KS="$STORE_FILE" ;;
+            *)  KS="android/app/$STORE_FILE" ;;
+          esac
+
+          if [ ! -f "$KS" ]; then
+            echo "::error title=Keystore file nahi mili::storeFile='$STORE_FILE' -> '$KS' maujood nahi hai."
+            echo "Yaad rahe: relative path android/app/ folder se resolve hota hai."
+            ls -la . || true
+            exit 1
+          fi
+          echo "Keystore: $KS ($(wc -c < "$KS") bytes)"
+
+          if ! INFO=$(keytool -J-Duser.language=en -J-Duser.country=US -list -v \
+                        -keystore "$KS" -storepass "$STORE_PW" 2>&1); then
+            echo "::error title=Keystore khul nahi rahi::key.properties ka storePassword galat hai, ya file corrupt hai."
+            printf '%s\n' "$INFO" | grep -iE "password|exception|not a|tampered" | head -5
+            exit 1
+          fi
+
+          ALIASES=$(printf '%s\n' "$INFO" | sed -n 's/^Alias name: *//p')
+          echo "Keystore ke alias:"; printf '%s\n' "$ALIASES" | sed 's/^/  - /'
+          if ! printf '%s\n' "$ALIASES" | grep -qixF "$ALIAS"; then
+            echo "::error title=Alias nahi mila::keyAlias='$ALIAS' is keystore me nahi hai."
+            exit 1
+          fi
+
+          CERT=$(keytool -J-Duser.language=en -J-Duser.country=US -list -v \
+                   -keystore "$KS" -storepass "$STORE_PW" -alias "$ALIAS" 2>/dev/null)
+          OWNER=$(printf '%s\n' "$CERT" | sed -n 's/^Owner: *//p' | head -1)
+          echo "EXPECTED_OWNER=$OWNER" >> "$GITHUB_ENV"
+
+          echo "--- Certificate (Firebase / Play Console ke liye) ---"
+          printf '%s\n' "$CERT" | grep -E "^Owner:|^Valid from:|SHA1:|SHA256:" | head -6
+          echo "key.properties valid hai, alias '$ALIAS' mil gaya."
+
       - name: Flutter pub get
         run: flutter pub get
 
@@ -293,8 +371,6 @@ jobs:
       #  Console reject karega - isliye yahin build fail kar dete hain.
       # ---------------------------------------------------------------
       - name: Verify signature (debug-signed build ko reject karo)
-        env:
-          EXPECTED_OWNER: ${{ steps.alias.outputs.owner }}
         run: |
           set -uo pipefail
           FAILED=0
