@@ -372,6 +372,9 @@ jobs:
       # ---------------------------------------------------------------
       - name: Verify signature (debug-signed build ko reject karo)
         run: |
+          # GitHub default shell = "bash -e": errexit band karo, hum khud
+          # FAILED flag se control karte hain.
+          set +e
           set -uo pipefail
           FAILED=0
           R="signing-report.txt"
@@ -403,9 +406,9 @@ jobs:
             f="$1"; label="$2"
             [ -f "$f" ] || return 0
             say "$label  ($(du -h "$f" | cut -f1))"
-            SIG=$(unzip -Z1 "$f" 'META-INF/*.RSA' 'META-INF/*.DSA' 'META-INF/*.EC' 2>/dev/null | head -1)
-            if [ -z "$SIG" ]; then
-              say "  v1/JAR signature block nahi mila"
+            SIG=$(unzip -Z1 "$f" 2>/dev/null | grep -E '^META-INF/.*\.(RSA|DSA|EC)$' | head -1)
+            if [ -z "${SIG:-}" ]; then
+              say "  v1/JAR signature block nahi hai (normal: minSdk>=24 par AGP sirf v2/v3 use karta hai)"
             else
               unzip -p "$f" "$SIG" > "$RUNNER_TEMP/sig.p7" 2>/dev/null
               CERT=$(keytool -J-Duser.language=en -printcert -file "$RUNNER_TEMP/sig.p7" 2>/dev/null)
