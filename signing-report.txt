@@ -1,5 +1,5 @@
-=== Signing report - run 3 - 2026-10-05T13:57:19Z ===
-commit: 34d4175484c0253c1182a55d0a0c3dd1bce24640
+=== Signing report - run 4 - 2026-10-05T14:01:58Z ===
+commit: ea826cf540a1b5b1b1de56e93ee74226cd133269
 
 KEYSTORE expected signer
   owner : CN=Das, OU=das, O=das, L=Jaipur, ST=Rajsthan, C=91
@@ -11,4 +11,11 @@ AAB  (60M)
   RESULT: OK - aapki release key se signed hai (fingerprint match)
 
 APK (v1 block)  (63M)
-release: n/a
+  v1/JAR signature block nahi hai (normal: minSdk>=24 par AGP sirf v2/v3 use karta hai)
+
+APK apksigner verify:
+  V2 Signer: certificate DN: CN=Das, OU=das, O=das, L=Jaipur, ST=Rajsthan, C=91
+  V2 Signer: certificate SHA-256 digest: 13d423187259f55a9b6221da4e197e57ce2cc0e5292fb843e51405573d152d00
+
+FINAL: PASS
+release: https://github.com/Mr-argha-das/wecare-app/releases/tag/build-4
