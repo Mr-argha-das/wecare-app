@@ -6,131 +6,177 @@ Play Store ke liye **signed AAB / APK** GitHub Actions se banane ka tarika.
 |---|---|
 | App ID | `com.wecare.newapp` |
 | Workflow | `.github/workflows/release.yml` |
-| Gradle signing config | `android/app/build.gradle.kts` (line 15–20, 57–91) |
+| Signing config | `android/app/build.gradle.kts` (line 15–20, 57–91) |
+| Credentials | `android/key.properties` (repo me committed) |
 
 ---
 
-## 🔴 Pehle ye padhein — Security
+## ⬇️ Latest build — ready to upload
 
-Ye repo **public** hai aur `upload-keystore.jks` seedhe repo me commit ho chuki hai.
-Matlab duniya me koi bhi use download kar sakta hai:
-`https://github.com/Mr-argha-das/wecare-app/blob/main/upload-keystore.jks`
+**[Build #4 — v1.0.9 (versionCode 9)](https://github.com/Mr-argha-das/wecare-app/releases/tag/build-4)**
 
-Keystore password-protected hai, isliye turant koi app sign nahi kar sakta —
-**lekin** password offline brute-force kiya ja sakta hai. Keystore leak hone ka
-matlab hai koi aur aapke naam se app sign kar sakta hai, aur keystore badalne par
-Play Store par aapki app ka update **kabhi** nahi chadhega.
-
-**Teen options, behtar se kam behtar:**
-
-| Option | Kya karna hai |
-|---|---|
-| ✅ **Best** | Repo **private** karein (Settings → General → Danger Zone → Change visibility) |
-| ✅ **Best** | `.jks` repo se hatayein aur `KEYSTORE_BASE64` secret use karein ([neeche](#option-b-keystore-secret-me-recommended)) |
-| ⚠️ Agar key already leak maan rahe hain | Play Console → Setup → App integrity → **Request upload key reset** |
-
-Workflow dono tarike support karta hai, isliye `.jks` repo se hataane ke baad bhi
-build bina kisi badlav ke chalta rahega.
-
----
-
-## 1. Secrets add karein
-
-GitHub → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
-
-| Secret | Zaroori? | Value |
+| File | Size | Kya karein |
 |---|---|---|
-| `KEYSTORE_PASSWORD` | ✅ Haan | Keystore (store) ka password |
-| `KEY_PASSWORD` | ❌ Optional | Key ka password. Na dein to store password hi use hoga |
-| `KEY_ALIAS` | ❌ Optional | Alias. Na dein to keystore se **auto-detect** ho jayega |
-| `KEYSTORE_BASE64` | ❌ Optional | Keystore ka base64 — isse `.jks` repo me rakhne ki zaroorat nahi |
+| [`wecare-1.0.9-9-run4.aab`](https://github.com/Mr-argha-das/wecare-app/releases/download/build-4/wecare-1.0.9-9-run4.aab) | 59 MB | **Play Console me upload karein** |
+| [`wecare-1.0.9-9-run4.apk`](https://github.com/Mr-argha-das/wecare-app/releases/download/build-4/wecare-1.0.9-9-run4.apk) | 62 MB | Phone me direct install / testing |
 
-> Alias yaad nahi? Koi baat nahi — khali chhod dein. Workflow keystore kholkar
-> saare alias print karta hai aur pehla wala use kar leta hai.
+### Signature verified ✅
 
-### Option B: Keystore secret me (recommended)
+Build ke baad CI ne AAB ke andar se **asli signer certificate** nikaal kar
+keystore ke certificate se fingerprint compare kiya (poora output: `signing-report.txt`):
 
-Apne laptop par:
-
-```bash
-# macOS
-base64 -i upload-keystore.jks | pbcopy
-
-# Linux
-base64 -w0 upload-keystore.jks | xclip -selection clipboard
-
-# Windows (PowerShell)
-[convert]::ToBase64String((Get-Content upload-keystore.jks -AsByteStream)) | Set-Clipboard
+```
+KEYSTORE expected : 13:D4:23:18:72:59:F5:5A:9B:62:21:DA:4E:19:7E:57:
+                    CE:2C:C0:E5:29:2F:B8:43:E5:14:05:57:3D:15:2D:00
+AAB signer        : (same)                                    -> MATCH
+APK V2 signer     : (same)                                    -> MATCH
+owner             : CN=Das, OU=das, O=das, L=Jaipur, ST=Rajsthan, C=91
+FINAL: PASS
 ```
 
-Output ko `KEYSTORE_BASE64` secret me paste karein. Phir repo se file hata dein:
+> Ye check isliye zaroori hai kyunki `build.gradle.kts` (line 83–85) credentials
+> na milne par chupchap **debug key** par chala jaata hai, aur uska pata Play
+> Console par upload karte waqt chalta ("signed with a debug certificate").
+> Ab aisa hua to CI build hi fail kar dega.
 
-```bash
-git rm --cached upload-keystore.jks
-git commit -m "Remove keystore from repo; use KEYSTORE_BASE64 secret"
-git push
-```
+### ⚠️ Upload se pehle: versionCode check karein
 
-> Isse file aage se commit nahi hogi, par **purani history me rahegi**.
-> Poori tarah mitane ke liye `git filter-repo` ya BFG chahiye — ya repo private kar dein.
+Is build me **versionCode = 9** hai (`pubspec.yaml` ka `version: 1.0.9+9`).
+Play Store har naye upload ke liye **pichhle se bada** versionCode maangta hai.
+
+Agar versionCode 9 pehle hi publish ho chuka hai, to naya build banayein —
+`build_number` input me `10` dein (neeche "Agli build" dekhein), ya `pubspec.yaml`
+me version `1.0.10+10` kar dein.
 
 ---
 
-## 2. Build chalayein
+## 🔴 Security — abhi ki sthiti
+
+Repo **public** hai aur usme dono cheezein maujood hain:
+
+- `upload-keystore.jks` (signing key)
+- `android/key.properties` (uska password, plaintext)
+
+Matlab **koi bhi aapki upload key use kar sakta hai.** Git history permanent
+hoti hai — file delete karne ya password badalne se ye theek nahi hota, kyunki
+purani file aur purana password history me rehte hain.
+
+### Achhi khabar: ye recoverable hai
+
+Aapki app Play Store par live hai, yaani **Play App Signing** on hai. Iska matlab
+ye keystore sirf **upload key** hai — asli *app signing key* Google ke paas hai
+aur wo kabhi expose nahi hui. Users ko jaane wali app abhi bhi surakshit hai.
+
+### Karne layak kaam (priority order)
+
+**1. Upload key reset karwayein** — Play Console → **Setup** → **App integrity**
+→ *App signing* → **Request upload key reset**. Nayi key banayein:
+
+```bash
+keytool -genkeypair -v -keystore upload-keystore-new.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+
+# Google ko bhejne ke liye certificate export karein
+keytool -export -rfc -keystore upload-keystore-new.jks \
+  -alias upload -file upload_certificate.pem
+```
+
+Google 1–2 din me key badal deta hai. Nayi key **kabhi** repo me commit na karein.
+
+**2. Repo private kar dein** — Settings → Danger Zone → Change visibility.
+Isse aage ka exposure ruk jaata hai.
+
+**3. Secrets wale setup par shift karein** — neeche *"Safe setup"* dekhein.
+
+**4. Naya password mazboot rakhein.** Purana `14322005` 8 digit ka tha. Maine
+is keystore par brute-force speed naapi thi: 1 GPU par ~5 minute. Nayi key ke
+liye lamba random passphrase use karein.
+
+---
+
+## Agli build kaise banayein
+
+### Abhi (ye PR merge hone se pehle)
+
+Is branch par koi bhi commit push karte hi build chal jaata hai
+(`push: branches: [arena/01a10c30-wecare-app]` trigger).
+
+### PR merge hone ke baad (recommended)
 
 GitHub → **Actions** → **Release Build (signed AAB + APK)** → **Run workflow**
 
 | Input | Default | Kaam |
 |---|---|---|
-| `artifact` | `both` | `aab` (Play Store), `apk` (direct install), ya dono |
-| `key_alias` | *(khali)* | Khali = auto-detect |
+| `artifact` | `both` | `aab`, `apk`, ya dono |
+| `key_alias` | *(khali)* | khali = auto-detect |
 | `build_name` | *(khali)* | versionName override, jaise `1.0.10` |
-| `build_number` | *(khali)* | versionCode override, jaise `10` |
+| `build_number` | *(khali)* | **versionCode override, jaise `10`** |
 
-Khali chhodne par `pubspec.yaml` ki version use hoti hai — abhi **`1.0.9+9`**
-(versionName `1.0.9`, versionCode `9`).
+> `workflow_dispatch` ka "Run workflow" button tabhi dikhta hai jab workflow
+> file **main** branch par ho — isliye pehle PR merge karein.
 
-> **Play Store rule:** har naye upload ka `versionCode` pichhle se **bada** hona chahiye.
-> Agar versionCode 9 pehle hi upload ho chuka hai, `build_number` me `10` daalein
-> (ya `pubspec.yaml` me version badha dein).
-
-Build khatm hone par run page ke **Artifacts** section se download karein:
-
-```
-wecare-1.0.9-9-run3.aab   ← Play Console me upload karein
-wecare-1.0.9-9-run3.apk   ← phone me direct install
-```
-
-### Tag se build (optional)
+### Tag se
 
 ```bash
-git tag v1.0.9
-git push origin v1.0.9
+git tag v1.0.10 && git push origin v1.0.10
 ```
 
-Isse build apne aap chalega aur files ek **GitHub Release** me attach ho jayengi
-(artifacts 30 din me expire hote hain, release files nahi).
+Build chalega aur files us tag ki GitHub Release me attach ho jayengi.
 
 ---
 
-## 3. Workflow kya-kya karta hai
+## Workflow kaise kaam karta hai
 
-1. `KEYSTORE_PASSWORD` set hai ya nahi — check
-2. Keystore laata hai: `KEYSTORE_BASE64` secret **ya** repo ki `upload-keystore.jks`
-   (file `$RUNNER_TEMP` me rakhi jaati hai — workspace se bahar, taaki kisi artifact me pack na ho)
-3. Keystore kholta hai, alias detect karta hai, **SHA-1 / SHA-256 fingerprint print** karta hai
-4. `android/key.properties` generate karta hai (absolute `storeFile` path ke saath)
-5. `flutter build appbundle --release` / `flutter build apk --release`
-6. **Signature verify** — agar build DEBUG key se signed nikla to build **fail** kar deta hai
-7. Artifacts upload, phir `key.properties` + keystore runner se delete
+Workflow **do modes** support karta hai aur khud detect kar leta hai:
 
-> Step 6 isliye hai kyunki `build.gradle.kts` (line 83–85) `key.properties` na milne par
-> chupchap debug key par chala jaata hai. Us silent failure ka pata Play Console par upload
-> karte waqt chalta — ab CI me hi pakda jayega.
+| Mode | Kab | Credentials kahan se |
+|---|---|---|
+| `repo` | `android/key.properties` repo me ho | wahi file *(abhi yahi active hai)* |
+| `secret` | key.properties na ho | GitHub Secrets |
+
+Steps:
+
+1. Signing mode detect
+2. Keystore + password + alias validate (galat hua to Gradle ke cryptic error
+   se pehle saaf message milta hai)
+3. `flutter build appbundle --release` / `flutter build apk --release`
+4. **Signature verify** — AAB/APK ke signer cert ka SHA-256 keystore se compare;
+   debug key mili to build **fail**
+5. Artifacts upload + GitHub Release publish
+6. Runner se credentials delete
 
 ---
 
-## 4. Local machine par release build
+## Safe setup (secrets) par shift kaise karein
+
+```bash
+# 1. keystore ka base64 banayein
+base64 -w0 upload-keystore.jks          # Linux
+base64 -i upload-keystore.jks | pbcopy  # macOS
+```
+
+2. GitHub → Settings → Secrets and variables → Actions me add karein:
+
+| Secret | Value |
+|---|---|
+| `KEYSTORE_BASE64` | upar wala base64 |
+| `KEYSTORE_PASSWORD` | store password |
+| `KEY_PASSWORD` | *(optional — blank = store password)* |
+| `KEY_ALIAS` | *(optional — blank = auto-detect)* |
+
+3. Repo se credentials hatayein:
+
+```bash
+git rm --cached android/key.properties upload-keystore.jks
+git commit -m "Move signing credentials to GitHub Secrets"
+git push
+```
+
+Workflow apne aap `secret` mode par switch ho jayega — koi aur badlav nahi chahiye.
+
+---
+
+## Local machine par release build
 
 ```bash
 cp android/key.properties.example android/key.properties
@@ -138,23 +184,23 @@ cp android/key.properties.example android/key.properties
 flutter build appbundle --release
 ```
 
-`android/key.properties` gitignored hai — commit nahi hogi.
-
 ---
 
-## 5. Firebase SHA fingerprint (agar zaroorat pade)
+## Firebase SHA fingerprint
 
-App `firebase_core` + `firebase_messaging` use karti hai. In dono ke liye SHA
-fingerprint zaroori **nahi** hai. Lekin aage kabhi Firebase **Auth** (Google /
-Phone sign-in) ya **Dynamic Links** add karein, to release key ka SHA-1 Firebase
-Console me daalna hoga.
+App `firebase_core` + `firebase_messaging` use karti hai — in dono ke liye SHA
+fingerprint **zaroori nahi**. Lekin aage Firebase **Auth** (Google/Phone sign-in)
+ya **Dynamic Links** add karein to ye SHA-1 Firebase Console me daalna hoga:
 
-SHA-1 har release build ke log me **"Inspect keystore and resolve alias"** step me print hota hai.
-Firebase Console → Project settings → Your apps → `com.wecare.newapp` → **Add fingerprint**.
+```
+EE:D5:10:8A:5F:25:78:66:E4:D1:A1:38:4B:8C:FE:E4:86:DD:A2:93
+```
 
-> Play App Signing on hai to Play Console (Setup → App integrity) wala
-> **app signing key** ka SHA-1 bhi add karna hoga, kyunki users tak jaane wali app
-> us key se sign hoti hai.
+Firebase Console → Project settings → Your apps → `com.wecare.newapp` → Add fingerprint.
+
+> Play App Signing on hai, isliye Play Console (Setup → App integrity) wale
+> **app signing key** ka SHA-1 bhi add karein — users tak jaane wali app us key
+> se sign hoti hai.
 
 ---
 
@@ -162,9 +208,10 @@ Firebase Console → Project settings → Your apps → `com.wecare.newapp` → 
 
 | Error | Wajah / Fix |
 |---|---|
-| `Secret 'KEYSTORE_PASSWORD' set nahi hai` | Step 1 karein |
-| `Keystore khul nahi rahi` | `KEYSTORE_PASSWORD` galat hai, ya `KEYSTORE_BASE64` adhoora paste hua |
-| `Alias '...' is keystore me nahi hai` | Log me print hui list me se alias chunein, ya `key_alias` khali chhod dein |
-| `AAB DEBUG key se signed hai` | `key.properties` load nahi hui — workflow log me "Create android/key.properties" step dekhein |
-| Play Console: `versionCode N already used` | `build_number` input me bada number dein |
-| Play Console: `signed with a debug certificate` | Aapne `Build APK (test build)` workflow chalaya hai. `Release Build` wala chalayein |
+| `Signing credentials nahi mile` | Na `android/key.properties` hai, na `KEYSTORE_PASSWORD` secret |
+| `Keystore khul nahi rahi` | `storePassword` galat, ya `KEYSTORE_BASE64` adhoora paste hua |
+| `Keystore file nahi mili` | `storeFile` path galat. Relative path **`android/app/`** se resolve hota hai — repo root ki file ke liye `../../upload-keystore.jks` |
+| `Alias nahi mila` | Log me alias list print hoti hai, usme se chunein (ya khali chhod dein) |
+| `AAB debug key se signed hai` | key.properties load nahi hui — "Detect signing mode" step ka log dekhein |
+| Play: `versionCode N already used` | `build_number` input me bada number dein |
+| Play: `signed with a debug certificate` | Aapne `Build APK (test build)` workflow chalaya hai — `Release Build` wala chalayein |
