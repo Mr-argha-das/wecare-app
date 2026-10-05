@@ -1,10 +1,17 @@
-name: Build APK
+name: Build APK (test build - DEBUG signed)
 
-# Copy this file into the wecare-app repo at:
-#     .github/workflows/build-apk.yml
+# ⚠️  Ye workflow sirf TESTING ke liye hai.
 #
-# Then: GitHub -> Actions -> "Build APK" -> Run workflow
-# When it finishes, download the APK from the run's "Artifacts" section.
+#     Ye koi keystore use nahi karta, isliye "--release" chunne par bhi
+#     APK DEBUG key se signed hota hai. Play Console aise build ko
+#     reject kar dega ("signed with a debug certificate").
+#
+#     Play Store ke liye signed AAB/APK chahiye to ye chalayein:
+#         Actions -> "Release Build (signed AAB + APK)"
+#     (file: .github/workflows/release.yml, setup: RELEASE.md)
+#
+# GitHub -> Actions -> "Build APK (test build - DEBUG signed)" -> Run workflow
+# Khatm hone par APK run ke "Artifacts" section se download karein.
 
 on:
   push:
