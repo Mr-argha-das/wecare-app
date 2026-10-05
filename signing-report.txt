@@ -1,0 +1,14 @@
+=== Signing report - run 3 - 2026-10-05T13:57:19Z ===
+commit: 34d4175484c0253c1182a55d0a0c3dd1bce24640
+
+KEYSTORE expected signer
+  owner : CN=Das, OU=das, O=das, L=Jaipur, ST=Rajsthan, C=91
+  sha256: 13:D4:23:18:72:59:F5:5A:9B:62:21:DA:4E:19:7E:57:CE:2C:C0:E5:29:2F:B8:43:E5:14:05:57:3D:15:2D:00
+
+AAB  (60M)
+  signer owner : CN=Das, OU=das, O=das, L=Jaipur, ST=Rajsthan, C=91
+  signer sha256: 13:D4:23:18:72:59:F5:5A:9B:62:21:DA:4E:19:7E:57:CE:2C:C0:E5:29:2F:B8:43:E5:14:05:57:3D:15:2D:00
+  RESULT: OK - aapki release key se signed hai (fingerprint match)
+
+APK (v1 block)  (63M)
+release: n/a
