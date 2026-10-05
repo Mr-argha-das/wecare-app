@@ -374,47 +374,79 @@ jobs:
         run: |
           set -uo pipefail
           FAILED=0
+          R="signing-report.txt"
+          : > "$R"
+          say() { echo "$@" | tee -a "$R"; }
 
-          check_debug() { # $1 = tool output
-            printf '%s\n' "$1" | grep -q "Android Debug"
+          say "=== Signing report - run ${GITHUB_RUN_NUMBER} - $(date -u +%FT%TZ) ==="
+          say "commit: ${GITHUB_SHA}"
+          say ""
+
+          # --- keystore ka asli certificate (source of truth) ---
+          KSF=$(grep -m1 '^storeFile=' android/key.properties | cut -d= -f2-)
+          KSP=$(grep -m1 '^storePassword=' android/key.properties | cut -d= -f2-)
+          KSA=$(grep -m1 '^keyAlias=' android/key.properties | cut -d= -f2-)
+          echo "::add-mask::$KSP"
+          case "$KSF" in /*) KS="$KSF" ;; *) KS="android/app/$KSF" ;; esac
+
+          KS_SHA=$(keytool -J-Duser.language=en -list -v -keystore "$KS" -storepass "$KSP" -alias "$KSA" 2>/dev/null \
+                    | sed -n 's/.*SHA256: *//p' | head -1)
+          KS_OWN=$(keytool -J-Duser.language=en -list -v -keystore "$KS" -storepass "$KSP" -alias "$KSA" 2>/dev/null \
+                    | sed -n 's/^Owner: *//p' | head -1)
+          say "KEYSTORE expected signer"
+          say "  owner : $KS_OWN"
+          say "  sha256: $KS_SHA"
+          say ""
+
+          # --- har artifact ka asli signer cert nikaalo ---
+          check_file() {
+            f="$1"; label="$2"
+            [ -f "$f" ] || return 0
+            say "$label  ($(du -h "$f" | cut -f1))"
+            SIG=$(unzip -Z1 "$f" 'META-INF/*.RSA' 'META-INF/*.DSA' 'META-INF/*.EC' 2>/dev/null | head -1)
+            if [ -z "$SIG" ]; then
+              say "  v1/JAR signature block nahi mila"
+            else
+              unzip -p "$f" "$SIG" > "$RUNNER_TEMP/sig.p7" 2>/dev/null
+              CERT=$(keytool -J-Duser.language=en -printcert -file "$RUNNER_TEMP/sig.p7" 2>/dev/null)
+              OWN=$(printf '%s\n' "$CERT" | sed -n 's/^Owner: *//p' | head -1)
+              SHA=$(printf '%s\n' "$CERT" | sed -n 's/.*SHA256: *//p' | head -1)
+              say "  signer owner : $OWN"
+              say "  signer sha256: $SHA"
+              if printf '%s' "$OWN" | grep -q "Android Debug"; then
+                say "  RESULT: DEBUG KEY SE SIGNED - Play Console reject karega"
+                echo "::error title=$label debug key se signed hai::Play Console ise reject karega."
+                FAILED=1
+              elif [ -n "$SHA" ] && [ "$SHA" = "$KS_SHA" ]; then
+                say "  RESULT: OK - aapki release key se signed hai (fingerprint match)"
+              else
+                say "  RESULT: fingerprint keystore se match nahi hua"
+                echo "::error title=$label ka signer keystore se match nahi karta::"
+                FAILED=1
+              fi
+            fi
+            say ""
           }
 
-          AAB="build/app/outputs/bundle/release/app-release.aab"
-          if [ -f "$AAB" ]; then
-            echo "=== AAB signature ==="
-            OUT=$(jarsigner -verify -certs -verbose "$AAB" 2>&1 || true)
-            printf '%s\n' "$OUT" | grep -m2 "X.509" || true
-            if check_debug "$OUT"; then
-              echo "::error title=AAB DEBUG key se signed hai::key.properties load nahi hua. Play Console ise reject karega."
-              FAILED=1
-            elif [ -n "${EXPECTED_OWNER:-}" ] && printf '%s\n' "$OUT" | grep -qF "$EXPECTED_OWNER"; then
-              echo "AAB aapki release key se signed hai."
-            elif printf '%s\n' "$OUT" | grep -q "jar verified"; then
-              echo "AAB signed hai (jar verified)."
-            else
-              echo "::warning title=AAB verify nahi ho payi::jarsigner output expected nahi tha, niche dekhein."
-              printf '%s\n' "$OUT" | tail -15
-            fi
-          fi
+          check_file "build/app/outputs/bundle/release/app-release.aab" "AAB"
+          check_file "build/app/outputs/flutter-apk/app-release.apk" "APK (v1 block)"
 
+          # APK ke liye apksigner (v2/v3 scheme) - zyada authoritative
           APK="build/app/outputs/flutter-apk/app-release.apk"
           if [ -f "$APK" ]; then
-            echo "=== APK signature ==="
-            APKSIGNER=$(ls "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
-            if [ -n "${APKSIGNER:-}" ]; then
-              OUT=$("$APKSIGNER" verify --print-certs "$APK" 2>&1 || true)
-              printf '%s\n' "$OUT" | grep -iE "certificate DN|SHA-1 digest" | head -3
-              if check_debug "$OUT"; then
-                echo "::error title=APK DEBUG key se signed hai::key.properties load nahi hua."
-                FAILED=1
-              else
-                echo "APK aapki release key se signed hai."
-              fi
-            else
-              echo "::warning::apksigner nahi mila, APK verification skip ki."
+            AS=$(ls "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
+            if [ -n "${AS:-}" ]; then
+              say "APK apksigner verify:"
+              OUT=$("$AS" verify --print-certs "$APK" 2>&1 || true)
+              printf '%s\n' "$OUT" | grep -iE "certificate DN|SHA-256 digest|Verified using" | sed 's/^/  /' | tee -a "$R"
+              printf '%s' "$OUT" | grep -q "Android Debug" && { FAILED=1; echo "::error::APK debug-signed"; }
+              say ""
             fi
           fi
 
+          say "FINAL: $([ $FAILED -eq 0 ] && echo PASS || echo FAIL)"
+          cat "$R"
+          { echo '```'; cat "$R"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           exit $FAILED
 
       # ---------------------------------------------------------------
@@ -454,16 +486,45 @@ jobs:
           retention-days: 30
 
       # ---------------------------------------------------------------
-      - name: Attach to GitHub Release (sirf tag push par)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Publish to GitHub Release (download link)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VNAME: ${{ steps.version.outputs.name }}
+          VCODE: ${{ steps.version.outputs.code }}
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME}"; PRE=""
+          else
+            TAG="build-${GITHUB_RUN_NUMBER}"; PRE="--prerelease"
+          fi
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "Build #${GITHUB_RUN_NUMBER} - v${VNAME} (versionCode ${VCODE})" \
+            --notes "Signed release build. \`.aab\` ko Play Console me upload karein, \`.apk\` phone me direct install ke liye hai." \
+            $PRE
+          gh release upload "$TAG" dist/* --clobber
+          URL=$(gh release view "$TAG" --json url --jq .url)
+          echo "RELEASE_URL=$URL" >> "$GITHUB_ENV"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Download:** $URL" >> "$GITHUB_STEP_SUMMARY"
+
+      # signing-report.txt branch par commit karo (agent ise git se padh sake,
+      # kyunki Actions logs/artifacts sandbox se reachable nahi hain)
+      - name: Commit signing report
+        if: always() && github.ref_type == 'branch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="${GITHUB_REF_NAME}"
-          gh release view "$TAG" >/dev/null 2>&1 \
-            || gh release create "$TAG" --title "$TAG" --generate-notes
-          gh release upload "$TAG" dist/* --clobber
+          [ -f signing-report.txt ] || exit 0
+          echo "release: ${RELEASE_URL:-n/a}" >> signing-report.txt
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f signing-report.txt
+          git diff --staged --quiet && exit 0
+          git commit -q -m "ci: signing report for run ${GITHUB_RUN_NUMBER} [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       # ---------------------------------------------------------------
       - name: Cleanup secrets from runner
