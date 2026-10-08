@@ -1,0 +1,538 @@
+name: Release Build (signed AAB + APK)
+
+# =====================================================================
+#  Play Store ke liye SIGNED release build banata hai.
+#
+#  Chalane ka tarika:
+#     GitHub -> Actions -> "Release Build (signed AAB + APK)"
+#                       -> "Run workflow"
+#  Ya tag push karke:  git tag v1.0.9 && git push origin v1.0.9
+#
+#  ZAROORI - ye Secrets pehle add karein
+#  (Settings -> Secrets and variables -> Actions -> New repository secret):
+#
+#     KEYSTORE_PASSWORD   (required)  keystore ka store password
+#     KEY_PASSWORD        (optional)  key ka password; blank = store password
+#     KEY_ALIAS           (optional)  alias; blank = keystore se auto-detect
+#     KEYSTORE_BASE64     (optional)  RECOMMENDED - keystore ka base64
+#
+#  Keystore kahan se uthegi (priority order):
+#     1. KEYSTORE_BASE64 secret        <- sabse safe
+#     2. repo me padi upload-keystore.jks file
+#
+#  Base64 secret banane ke liye (apne laptop par):
+#     macOS/Linux :  base64 -i upload-keystore.jks | pbcopy
+#     Windows PS  :  [convert]::ToBase64String((Get-Content upload-keystore.jks -AsByteStream))
+# =====================================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact:
+        description: "Kya banana hai"
+        type: choice
+        default: "both"
+        options:
+          - both
+          - aab
+          - apk
+      key_alias:
+        description: "Keystore alias (khali chhodein = auto-detect)"
+        required: false
+        default: ""
+      build_name:
+        description: "versionName override jaise 1.0.10 (khali = pubspec.yaml)"
+        required: false
+        default: ""
+      build_number:
+        description: "versionCode override jaise 10 (khali = pubspec.yaml)"
+        required: false
+        default: ""
+  push:
+    # TEMPORARY: is branch par push hote hi build chal jaye.
+    # (Arena agent ke token ke paas 'actions: write' nahi hai, isliye
+    #  manually run trigger nahi ho sakta - push hi trigger hai.)
+    # .aab deliver hone ke baad ye branch filter hata denge.
+    branches:
+      - arena/01a10c30-wecare-app
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write # tag build par GitHub Release banane ke liye
+
+jobs:
+  build:
+    name: Build signed release
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      # ---------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect signing mode
+        id: signing
+        env:
+          STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -f android/key.properties ]; then
+            echo "mode=repo" >> "$GITHUB_OUTPUT"
+            echo "Signing mode: REPO - android/key.properties repo me commit hai."
+            echo "::warning title=key.properties repo me hai::Signing credentials repo ke andar commit hain. Repo public hua to signing key compromise ho jayegi. Behtar: KEYSTORE_BASE64 + KEYSTORE_PASSWORD secrets."
+          elif [ -n "${STORE_PASSWORD:-}" ]; then
+            echo "mode=secret" >> "$GITHUB_OUTPUT"
+            echo "Signing mode: SECRET - GitHub Secrets se."
+          else
+            echo "::error title=Signing credentials nahi mile::Na android/key.properties repo me hai, na KEYSTORE_PASSWORD secret set hai."
+            echo "Do me se ek karein:"
+            echo "  1. android/key.properties commit karein (storePassword/keyPassword/keyAlias/storeFile)"
+            echo "  2. Settings -> Secrets and variables -> Actions me KEYSTORE_PASSWORD add karein"
+            exit 1
+          fi
+
+      # ---------------------------------------------------------------
+      #  push-tag par inputs khali hote hain, isliye defaults yahin tay
+      #  kar lete hain.
+      # ---------------------------------------------------------------
+      - name: Resolve build config
+        id: cfg
+        env:
+          IN_ARTIFACT: ${{ github.event.inputs.artifact }}
+        run: |
+          set -euo pipefail
+          A="${IN_ARTIFACT:-both}"
+          [ -z "$A" ] && A="both"
+          case "$A" in
+            aab) echo "aab=true"  >> "$GITHUB_OUTPUT"; echo "apk=false" >> "$GITHUB_OUTPUT" ;;
+            apk) echo "aab=false" >> "$GITHUB_OUTPUT"; echo "apk=true"  >> "$GITHUB_OUTPUT" ;;
+            *)   echo "aab=true"  >> "$GITHUB_OUTPUT"; echo "apk=true"  >> "$GITHUB_OUTPUT" ;;
+          esac
+          echo "Build karenge: $A"
+
+      # ---------------------------------------------------------------
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: Tool versions
+        run: |
+          flutter --version
+          java -version
+
+      # ---------------------------------------------------------------
+      #  Keystore ko workspace ke BAHAR ($RUNNER_TEMP) me rakhte hain,
+      #  taaki galti se kisi build output ya artifact me pack na ho jaye.
+      # ---------------------------------------------------------------
+      - name: Resolve keystore
+        id: keystore
+        if: steps.signing.outputs.mode == 'secret'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          DEST="$RUNNER_TEMP/release.jks"
+
+          if [ -n "${KEYSTORE_BASE64:-}" ]; then
+            printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > "$DEST"
+            echo "source=KEYSTORE_BASE64 secret" >> "$GITHUB_OUTPUT"
+            echo "Keystore KEYSTORE_BASE64 secret se li gayi."
+          elif [ -f "upload-keystore.jks" ]; then
+            cp "upload-keystore.jks" "$DEST"
+            echo "source=upload-keystore.jks (repo file)" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Keystore repo ke andar hai::Keystore repo me commit hai. Ise KEYSTORE_BASE64 secret me move karna zyada safe hai."
+          else
+            echo "::error title=Keystore nahi mili::Na KEYSTORE_BASE64 secret hai, na repo me upload-keystore.jks."
+            exit 1
+          fi
+
+          if [ ! -s "$DEST" ]; then
+            echo "::error title=Keystore khali hai::Decode ki hui keystore 0 bytes ki hai. KEYSTORE_BASE64 dobara banayein."
+            exit 1
+          fi
+
+          echo "path=$DEST" >> "$GITHUB_OUTPUT"
+          echo "Size: $(wc -c < "$DEST") bytes"
+
+      # ---------------------------------------------------------------
+      - name: Inspect keystore and resolve alias
+        id: alias
+        if: steps.signing.outputs.mode == 'secret'
+        env:
+          STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          ALIAS_SECRET: ${{ secrets.KEY_ALIAS }}
+          ALIAS_INPUT: ${{ github.event.inputs.key_alias }}
+          KEYSTORE_PATH: ${{ steps.keystore.outputs.path }}
+        run: |
+          set -uo pipefail
+
+          if ! INFO=$(keytool -J-Duser.language=en -J-Duser.country=US \
+                        -list -v -keystore "$KEYSTORE_PATH" \
+                        -storepass "$STORE_PASSWORD" 2>&1); then
+            echo "::error title=Keystore khul nahi rahi::Galat KEYSTORE_PASSWORD, ya file corrupt hai / keystore nahi hai."
+            printf '%s\n' "$INFO" | grep -iE "password|exception|not a|tampered" | head -5
+            exit 1
+          fi
+
+          ALIASES=$(printf '%s\n' "$INFO" | sed -n 's/^Alias name: *//p')
+          if [ -z "$ALIASES" ]; then
+            echo "::error title=Keystore khali hai::Is keystore me koi key alias nahi mila."
+            exit 1
+          fi
+
+          echo "Keystore ke andar maujood alias:"
+          printf '%s\n' "$ALIASES" | sed 's/^/  - /'
+
+          WANT="${ALIAS_INPUT:-}"
+          [ -z "$WANT" ] && WANT="${ALIAS_SECRET:-}"
+
+          if [ -z "$WANT" ]; then
+            WANT=$(printf '%s\n' "$ALIASES" | head -1)
+            echo "Alias diya nahi gaya -> auto-detect: '$WANT'"
+          elif ! printf '%s\n' "$ALIASES" | grep -qixF "$WANT"; then
+            echo "::error title=Alias nahi mila::Alias '$WANT' is keystore me nahi hai. Upar di hui list me se koi ek use karein."
+            exit 1
+          else
+            echo "Alias use ho raha hai: '$WANT'"
+          fi
+          echo "name=$WANT" >> "$GITHUB_OUTPUT"
+
+          CERT=$(keytool -J-Duser.language=en -J-Duser.country=US -list -v \
+                   -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" \
+                   -alias "$WANT" 2>/dev/null)
+
+          OWNER=$(printf '%s\n' "$CERT" | sed -n 's/^Owner: *//p' | head -1)
+          echo "EXPECTED_OWNER=$OWNER" >> "$GITHUB_ENV"
+
+          echo "--- Certificate (Firebase / Play Console ke liye) ---"
+          printf '%s\n' "$CERT" | grep -E "^Owner:|^Valid from:|SHA1:|SHA256:" | head -6
+
+      # ---------------------------------------------------------------
+      #  android/key.properties banate hain - yahi file
+      #  android/app/build.gradle.kts line 16 par padhta hai.
+      #  Backslash escape zaroori hai (Java .properties format).
+      # ---------------------------------------------------------------
+      - name: Create android/key.properties
+        if: steps.signing.outputs.mode == 'secret'
+        env:
+          STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ steps.alias.outputs.name }}
+          KEYSTORE_PATH: ${{ steps.keystore.outputs.path }}
+        run: |
+          set -euo pipefail
+          KP="${KEY_PASSWORD:-}"
+          if [ -z "$KP" ]; then
+            KP="$STORE_PASSWORD"
+            echo "KEY_PASSWORD secret nahi mila -> store password hi use kar rahe hain."
+          fi
+
+          esc() { printf '%s' "$1" | sed -e 's/\\/\\\\/g'; }
+
+          {
+            printf 'storePassword=%s\n' "$(esc "$STORE_PASSWORD")"
+            printf 'keyPassword=%s\n'   "$(esc "$KP")"
+            printf 'keyAlias=%s\n'      "$(esc "$KEY_ALIAS")"
+            printf 'storeFile=%s\n'     "$(esc "$KEYSTORE_PATH")"
+          } > android/key.properties
+
+          echo "key.properties ban gayi (passwords chhupe hue):"
+          sed -e 's/\(storePassword=\).*/\1***/' \
+              -e 's/\(keyPassword=\).*/\1***/' android/key.properties
+
+      # ---------------------------------------------------------------
+      # ---------------------------------------------------------------
+      #  REPO mode: key.properties pehle se repo me hai. Use padhkar
+      #  keystore validate karte hain, taaki galat password/alias ka
+      #  pata Gradle ke cryptic error se pehle chal jaye.
+      # ---------------------------------------------------------------
+      - name: Validate committed key.properties
+        if: steps.signing.outputs.mode == 'repo'
+        run: |
+          set -uo pipefail
+
+          prop() {
+            grep -m1 "^$1=" android/key.properties | cut -d= -f2- | sed -e 's/\\\(.\)/\1/g'
+          }
+          STORE_FILE=$(prop storeFile)
+          STORE_PW=$(prop storePassword)
+          KEY_PW=$(prop keyPassword)
+          ALIAS=$(prop keyAlias)
+
+          # passwords ko log me mask karo
+          [ -n "$STORE_PW" ] && echo "::add-mask::$STORE_PW"
+          [ -n "$KEY_PW" ]   && echo "::add-mask::$KEY_PW"
+
+          for f in storeFile storePassword keyPassword keyAlias; do
+            if ! grep -q "^$f=" android/key.properties; then
+              echo "::error title=key.properties adhoori hai::'$f' missing hai."
+              exit 1
+            fi
+          done
+
+          # storeFile relative ho to wo android/app/ se resolve hota hai
+          case "$STORE_FILE" in
+            /*) KS="$STORE_FILE" ;;
+            *)  KS="android/app/$STORE_FILE" ;;
+          esac
+
+          if [ ! -f "$KS" ]; then
+            echo "::error title=Keystore file nahi mili::storeFile='$STORE_FILE' -> '$KS' maujood nahi hai."
+            echo "Yaad rahe: relative path android/app/ folder se resolve hota hai."
+            ls -la . || true
+            exit 1
+          fi
+          echo "Keystore: $KS ($(wc -c < "$KS") bytes)"
+
+          if ! INFO=$(keytool -J-Duser.language=en -J-Duser.country=US -list -v \
+                        -keystore "$KS" -storepass "$STORE_PW" 2>&1); then
+            echo "::error title=Keystore khul nahi rahi::key.properties ka storePassword galat hai, ya file corrupt hai."
+            printf '%s\n' "$INFO" | grep -iE "password|exception|not a|tampered" | head -5
+            exit 1
+          fi
+
+          ALIASES=$(printf '%s\n' "$INFO" | sed -n 's/^Alias name: *//p')
+          echo "Keystore ke alias:"; printf '%s\n' "$ALIASES" | sed 's/^/  - /'
+          if ! printf '%s\n' "$ALIASES" | grep -qixF "$ALIAS"; then
+            echo "::error title=Alias nahi mila::keyAlias='$ALIAS' is keystore me nahi hai."
+            exit 1
+          fi
+
+          CERT=$(keytool -J-Duser.language=en -J-Duser.country=US -list -v \
+                   -keystore "$KS" -storepass "$STORE_PW" -alias "$ALIAS" 2>/dev/null)
+          OWNER=$(printf '%s\n' "$CERT" | sed -n 's/^Owner: *//p' | head -1)
+          echo "EXPECTED_OWNER=$OWNER" >> "$GITHUB_ENV"
+
+          echo "--- Certificate (Firebase / Play Console ke liye) ---"
+          printf '%s\n' "$CERT" | grep -E "^Owner:|^Valid from:|SHA1:|SHA256:" | head -6
+          echo "key.properties valid hai, alias '$ALIAS' mil gaya."
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Resolve version
+        id: version
+        env:
+          IN_NAME: ${{ github.event.inputs.build_name }}
+          IN_CODE: ${{ github.event.inputs.build_number }}
+        run: |
+          set -euo pipefail
+          RAW=$(grep -m1 '^version:' pubspec.yaml | sed 's/^version: *//' | tr -d '[:space:]')
+          NAME="${RAW%%+*}"
+          CODE=""
+          case "$RAW" in *+*) CODE="${RAW##*+}" ;; esac
+
+          [ -n "${IN_NAME:-}" ] && NAME="$IN_NAME"
+          [ -n "${IN_CODE:-}" ] && CODE="$IN_CODE"
+
+          FLAGS="--build-name=$NAME"
+          [ -n "$CODE" ] && FLAGS="$FLAGS --build-number=$CODE"
+
+          echo "name=$NAME"   >> "$GITHUB_OUTPUT"
+          echo "code=$CODE"   >> "$GITHUB_OUTPUT"
+          echo "flags=$FLAGS" >> "$GITHUB_OUTPUT"
+          echo "versionName=$NAME   versionCode=${CODE:-<pubspec>}"
+
+      # ---------------------------------------------------------------
+      - name: Build AAB (Play Store)
+        if: steps.cfg.outputs.aab == 'true'
+        run: flutter build appbundle --release ${{ steps.version.outputs.flags }}
+
+      - name: Build APK (direct install / testing)
+        if: steps.cfg.outputs.apk == 'true'
+        run: flutter build apk --release ${{ steps.version.outputs.flags }}
+
+      # ---------------------------------------------------------------
+      #  Sabse important check: build.gradle.kts chupchap DEBUG key par
+      #  fallback kar sakta hai (line 83-85). Agar aisa hua to Play
+      #  Console reject karega - isliye yahin build fail kar dete hain.
+      # ---------------------------------------------------------------
+      - name: Verify signature (debug-signed build ko reject karo)
+        run: |
+          # GitHub default shell = "bash -e": errexit band karo, hum khud
+          # FAILED flag se control karte hain.
+          set +e
+          set -uo pipefail
+          FAILED=0
+          R="signing-report.txt"
+          : > "$R"
+          say() { echo "$@" | tee -a "$R"; }
+
+          say "=== Signing report - run ${GITHUB_RUN_NUMBER} - $(date -u +%FT%TZ) ==="
+          say "commit: ${GITHUB_SHA}"
+          say ""
+
+          # --- keystore ka asli certificate (source of truth) ---
+          KSF=$(grep -m1 '^storeFile=' android/key.properties | cut -d= -f2-)
+          KSP=$(grep -m1 '^storePassword=' android/key.properties | cut -d= -f2-)
+          KSA=$(grep -m1 '^keyAlias=' android/key.properties | cut -d= -f2-)
+          echo "::add-mask::$KSP"
+          case "$KSF" in /*) KS="$KSF" ;; *) KS="android/app/$KSF" ;; esac
+
+          KS_SHA=$(keytool -J-Duser.language=en -list -v -keystore "$KS" -storepass "$KSP" -alias "$KSA" 2>/dev/null \
+                    | sed -n 's/.*SHA256: *//p' | head -1)
+          KS_OWN=$(keytool -J-Duser.language=en -list -v -keystore "$KS" -storepass "$KSP" -alias "$KSA" 2>/dev/null \
+                    | sed -n 's/^Owner: *//p' | head -1)
+          say "KEYSTORE expected signer"
+          say "  owner : $KS_OWN"
+          say "  sha256: $KS_SHA"
+          say ""
+
+          # --- har artifact ka asli signer cert nikaalo ---
+          check_file() {
+            f="$1"; label="$2"
+            [ -f "$f" ] || return 0
+            say "$label  ($(du -h "$f" | cut -f1))"
+            SIG=$(unzip -Z1 "$f" 2>/dev/null | grep -E '^META-INF/.*\.(RSA|DSA|EC)$' | head -1)
+            if [ -z "${SIG:-}" ]; then
+              say "  v1/JAR signature block nahi hai (normal: minSdk>=24 par AGP sirf v2/v3 use karta hai)"
+            else
+              unzip -p "$f" "$SIG" > "$RUNNER_TEMP/sig.p7" 2>/dev/null
+              CERT=$(keytool -J-Duser.language=en -printcert -file "$RUNNER_TEMP/sig.p7" 2>/dev/null)
+              OWN=$(printf '%s\n' "$CERT" | sed -n 's/^Owner: *//p' | head -1)
+              SHA=$(printf '%s\n' "$CERT" | sed -n 's/.*SHA256: *//p' | head -1)
+              say "  signer owner : $OWN"
+              say "  signer sha256: $SHA"
+              if printf '%s' "$OWN" | grep -q "Android Debug"; then
+                say "  RESULT: DEBUG KEY SE SIGNED - Play Console reject karega"
+                echo "::error title=$label debug key se signed hai::Play Console ise reject karega."
+                FAILED=1
+              elif [ -n "$SHA" ] && [ "$SHA" = "$KS_SHA" ]; then
+                say "  RESULT: OK - aapki release key se signed hai (fingerprint match)"
+              else
+                say "  RESULT: fingerprint keystore se match nahi hua"
+                echo "::error title=$label ka signer keystore se match nahi karta::"
+                FAILED=1
+              fi
+            fi
+            say ""
+          }
+
+          check_file "build/app/outputs/bundle/release/app-release.aab" "AAB"
+          check_file "build/app/outputs/flutter-apk/app-release.apk" "APK (v1 block)"
+
+          # APK ke liye apksigner (v2/v3 scheme) - zyada authoritative
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          if [ -f "$APK" ]; then
+            AS=$(ls "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
+            if [ -n "${AS:-}" ]; then
+              say "APK apksigner verify:"
+              OUT=$("$AS" verify --print-certs "$APK" 2>&1 || true)
+              printf '%s\n' "$OUT" | grep -iE "certificate DN|SHA-256 digest|Verified using" | sed 's/^/  /' | tee -a "$R"
+              printf '%s' "$OUT" | grep -q "Android Debug" && { FAILED=1; echo "::error::APK debug-signed"; }
+              say ""
+            fi
+          fi
+
+          say "FINAL: $([ $FAILED -eq 0 ] && echo PASS || echo FAIL)"
+          cat "$R"
+          { echo '```'; cat "$R"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $FAILED
+
+      # ---------------------------------------------------------------
+      - name: Collect artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          BASE="wecare-${{ steps.version.outputs.name }}-${{ steps.version.outputs.code }}-run${GITHUB_RUN_NUMBER}"
+
+          AAB="build/app/outputs/bundle/release/app-release.aab"
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          [ -f "$AAB" ] && cp "$AAB" "dist/${BASE}.aab"
+          [ -f "$APK" ] && cp "$APK" "dist/${BASE}.apk"
+          ls -lh dist
+
+          {
+            echo "### Release build taiyaar hai"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| versionName | \`${{ steps.version.outputs.name }}\` |"
+            echo "| versionCode | \`${{ steps.version.outputs.code }}\` |"
+            echo "| applicationId | \`com.wecare.newapp\` |"
+            echo "| Keystore source | ${{ steps.keystore.outputs.source }} |"
+            echo "| Key alias | \`${{ steps.alias.outputs.name }}\` |"
+            echo ""
+            echo "File is run ke **Artifacts** section me milegi."
+            echo "\`.aab\` -> Play Console me upload karein. \`.apk\` -> phone me direct install."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wecare-release-${{ github.run_number }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+      # ---------------------------------------------------------------
+      - name: Publish to GitHub Release (download link)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VNAME: ${{ steps.version.outputs.name }}
+          VCODE: ${{ steps.version.outputs.code }}
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME}"; PRE=""
+          else
+            TAG="build-${GITHUB_RUN_NUMBER}"; PRE="--prerelease"
+          fi
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "Build #${GITHUB_RUN_NUMBER} - v${VNAME} (versionCode ${VCODE})" \
+            --notes "Signed release build. \`.aab\` ko Play Console me upload karein, \`.apk\` phone me direct install ke liye hai." \
+            $PRE
+          gh release upload "$TAG" dist/* --clobber
+          URL=$(gh release view "$TAG" --json url --jq .url)
+          echo "RELEASE_URL=$URL" >> "$GITHUB_ENV"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Download:** $URL" >> "$GITHUB_STEP_SUMMARY"
+
+      # signing-report.txt branch par commit karo (agent ise git se padh sake,
+      # kyunki Actions logs/artifacts sandbox se reachable nahi hain)
+      - name: Commit signing report
+        if: always() && github.ref_type == 'branch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [ -f signing-report.txt ] || exit 0
+          echo "release: ${RELEASE_URL:-n/a}" >> signing-report.txt
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f signing-report.txt
+          git diff --staged --quiet && exit 0
+          git commit -q -m "ci: signing report for run ${GITHUB_RUN_NUMBER} [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      # ---------------------------------------------------------------
+      - name: Cleanup secrets from runner
+        if: always()
+        run: |
+          rm -f android/key.properties || true
+          rm -f "$RUNNER_TEMP/release.jks" || true
+          echo "key.properties aur keystore runner se delete kar diye."

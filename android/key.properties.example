@@ -1,0 +1,30 @@
+# =====================================================================
+#  LOCAL release build ke liye template.
+#
+#  Isko copy karke  android/key.properties  banayein aur apni values
+#  bharein. Wo file .gitignore me hai - kabhi commit nahi hogi.
+#
+#      cp android/key.properties.example android/key.properties
+#
+#  GitHub Actions par ye file apne aap ban jaati hai
+#  (.github/workflows/release.yml dekhein) - wahan kuch karne ki
+#  zaroorat nahi, bas Secrets set karein.
+# =====================================================================
+
+# Keystore (store) ka password
+storePassword=CHANGE_ME
+
+# Key ka password (aksar store password jaisa hi hota hai)
+keyPassword=CHANGE_ME
+
+# Key ka alias. Pata na ho to ye chalayein:
+#   keytool -list -v -keystore upload-keystore.jks
+keyAlias=upload
+
+# .jks file ka path.
+#  - ABSOLUTE path sabse safe hai, jaise:
+#       /Users/argha/keys/upload-keystore.jks
+#       C:\\Users\\argha\\keys\\upload-keystore.jks     <- Windows me \\ double
+#  - Relative path  android/app/  folder se resolve hota hai,
+#    isliye repo root ki file ke liye: ../../upload-keystore.jks
+storeFile=../../upload-keystore.jks
