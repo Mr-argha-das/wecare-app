@@ -13,12 +13,14 @@ Play Store ke liye **signed AAB / APK** GitHub Actions se banane ka tarika.
 
 ## ⬇️ Latest build — ready to upload
 
-**[Build #4 — v1.0.9 (versionCode 9)](https://github.com/Mr-argha-das/wecare-app/releases/tag/build-4)**
+**[Build #5 — v1.1.0 (versionCode 10)](https://github.com/Mr-argha-das/wecare-app/releases/tag/build-5)**
 
 | File | Size | Kya karein |
 |---|---|---|
-| [`wecare-1.0.9-9-run4.aab`](https://github.com/Mr-argha-das/wecare-app/releases/download/build-4/wecare-1.0.9-9-run4.aab) | 59 MB | **Play Console me upload karein** |
-| [`wecare-1.0.9-9-run4.apk`](https://github.com/Mr-argha-das/wecare-app/releases/download/build-4/wecare-1.0.9-9-run4.apk) | 62 MB | Phone me direct install / testing |
+| [`wecare-1.1.0-10-run5.aab`](https://github.com/Mr-argha-das/wecare-app/releases/download/build-5/wecare-1.1.0-10-run5.aab) | 59 MB | **Play Console me upload karein** |
+| [`wecare-1.1.0-10-run5.apk`](https://github.com/Mr-argha-das/wecare-app/releases/download/build-5/wecare-1.1.0-10-run5.apk) | 62 MB | Phone me direct install / testing |
+
+<sub>Purani build: [build-4 — v1.0.9 (versionCode 9)](https://github.com/Mr-argha-das/wecare-app/releases/tag/build-4)</sub>
 
 ### Signature verified ✅
 
@@ -39,14 +41,11 @@ FINAL: PASS
 > Console par upload karte waqt chalta ("signed with a debug certificate").
 > Ab aisa hua to CI build hi fail kar dega.
 
-### ⚠️ Upload se pehle: versionCode check karein
+### versionCode
 
-Is build me **versionCode = 9** hai (`pubspec.yaml` ka `version: 1.0.9+9`).
-Play Store har naye upload ke liye **pichhle se bada** versionCode maangta hai.
-
-Agar versionCode 9 pehle hi publish ho chuka hai, to naya build banayein —
-`build_number` input me `10` dein (neeche "Agli build" dekhein), ya `pubspec.yaml`
-me version `1.0.10+10` kar dein.
+`pubspec.yaml` me `version: 1.1.0+10` hai, yaani **versionName 1.1.0 / versionCode 10**.
+Play Store har naye upload ke liye pichhle se **bada** versionCode maangta hai —
+agli baar `pubspec.yaml` me version badha dein, ya `build_number` input use karein.
 
 ---
 
