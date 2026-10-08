@@ -1,5 +1,5 @@
-=== Signing report - run 4 - 2026-10-05T14:01:58Z ===
-commit: ea826cf540a1b5b1b1de56e93ee74226cd133269
+=== Signing report - run 5 - 2026-10-08T09:01:20Z ===
+commit: d8a3482816f9cc83a97cf3b6b65d091d0e26d81f
 
 KEYSTORE expected signer
   owner : CN=Das, OU=das, O=das, L=Jaipur, ST=Rajsthan, C=91
@@ -18,4 +18,4 @@ APK apksigner verify:
   V2 Signer: certificate SHA-256 digest: 13d423187259f55a9b6221da4e197e57ce2cc0e5292fb843e51405573d152d00
 
 FINAL: PASS
-release: https://github.com/Mr-argha-das/wecare-app/releases/tag/build-4
+release: https://github.com/Mr-argha-das/wecare-app/releases/tag/build-5
