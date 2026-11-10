@@ -3,14 +3,18 @@ import 'package:intl/intl.dart';
 import '../../core/network/api_client.dart';
 import 'package:healthcare/core/theme/app_theme.dart';
 
-class NurseAttendancePage extends StatefulWidget {
-  const NurseAttendancePage({super.key});
+/// Purana monthly attendance calendar (GET /nurse/attendance?month=).
+/// Ab ye `NurseAttendancePage` ke andar "Monthly" tab ki tarah chalta hai -
+/// dekhein: lib/features/attendance/nurse_attendance_page.dart
+
+class MonthlyAttendanceTab extends StatefulWidget {
+  const MonthlyAttendanceTab({super.key});
 
   @override
-  State<NurseAttendancePage> createState() => _NurseAttendancePageState();
+  State<MonthlyAttendanceTab> createState() => _MonthlyAttendanceTabState();
 }
 
-class _NurseAttendancePageState extends State<NurseAttendancePage> {
+class _MonthlyAttendanceTabState extends State<MonthlyAttendanceTab> {
   DateTime selectedMonth = DateTime.now();
 
   bool loading = true;
@@ -84,7 +88,6 @@ class _NurseAttendancePageState extends State<NurseAttendancePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.primarylight,
-      appBar: AppBar(title: const Text("My Attendance"), centerTitle: true),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : error

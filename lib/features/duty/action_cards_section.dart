@@ -4,7 +4,7 @@ import 'package:healthcare/core/network/api_client.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:healthcare/features/duty/attendance.dart';
+import 'package:healthcare/features/attendance/nurse_attendance_page.dart';
 import 'package:healthcare/features/duty/biometric_auth.dart';
 import 'package:healthcare/features/duty/duty_service.dart';
 import '../../routes/app_routes.dart';

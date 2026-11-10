@@ -13,7 +13,7 @@
 	<string>This app tracks nurse location during active duty for patient safety.</string>
 
     <key>NSCameraUsageDescription</key>
-    <string>Camera access required to upload documents</string>
+    <string>Camera is used for face-based attendance (punch in / punch out) and to capture documents.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Gallery access required to upload documents</string>
 	<key>CFBundleDevelopmentRegion</key>
