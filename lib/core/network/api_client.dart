@@ -141,6 +141,36 @@ class ApiClient {
   }
 
   /* =====================================================
+      🔹 POST (BODY LOG NAHI HOTI)
+
+      Face attendance me request body ke andar base64 photo jaati hai.
+      Use kabhi log nahi karna - isliye yahan sirf status code print
+      hota hai, na request body na response body.
+  ===================================================== */
+  static Future<dynamic> postNoLog(String path, Map body) async {
+    final token = await TokenStorage.getToken();
+
+    final res = await http.post(
+      Uri.parse("$baseUrl$path"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode(body),
+    );
+
+    log("POST $path -> ${res.statusCode}");
+
+    await _handleError(res);
+
+    if (res.body.isEmpty) {
+      return {"success": true};
+    }
+
+    return jsonDecode(res.body);
+  }
+
+  /* =====================================================
       🔥 CENTRAL ERROR HANDLER
   ===================================================== */
   static Future<void> _handleError(http.Response res) async {

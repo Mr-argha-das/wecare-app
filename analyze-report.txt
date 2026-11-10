@@ -1,0 +1,141 @@
+Analyzing wecare-app...                                         
+
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/core/utils/app_access.dart:21:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/core/utils/app_access.dart:24:9 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/core/utils/app_access.dart:27:9 • avoid_print
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/core/utils/regis.dart:150:21 • use_build_context_synchronously
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/core/utils/regis.dart:152:7 • avoid_print
+   info • Angle brackets will be interpreted as HTML. Try using backticks around the content with angle brackets, or try replacing `<` with `&lt;` and `>` with `&gt;` • lib/features/attendance/attendance_api.dart:15:56 • unintended_html_in_doc_comment
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/attendance_card.dart:347:18 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/attendance_card.dart:393:31 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/attendance_card.dart:396:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/attendance_card.dart:498:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/attendance_card.dart:500:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/face_capture.dart:195:32 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/face_enroll_page.dart:255:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/face_enroll_page.dart:257:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/face_enroll_page.dart:371:49 • deprecated_member_use
+   info • Unnecessary use of multiple underscores. Try using '_' • lib/features/attendance/face_history_page.dart:144:31 • unnecessary_underscores
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/face_history_page.dart:264:22 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/face_history_page.dart:266:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/face_history_page.dart:326:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/face_history_page.dart:389:35 • deprecated_member_use
+   info • 'desiredAccuracy' is deprecated and shouldn't be used. use settings parameter with AndroidSettings, AppleSettings, WebSettings, or LocationSettings. Try replacing the use of the deprecated member with the replacement • lib/features/attendance/punch_service.dart:119:7 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/auth/about_us_page.dart:101:41 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/auth/nurse_update_password_page.dart:63:21 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/doctor/doctor_home.dart:209:52 • deprecated_member_use
+   info • Unnecessary use of multiple underscores. Try using '_' • lib/features/doctor/doctor_home.dart:314:51 • unnecessary_underscores
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/doctor/doctor_home.dart:368:31 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/doctor/doctor_home.dart:380:22 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/doctor/doctor_prescribe.dart:56:21 • use_build_context_synchronously
+   info • The import of 'package:flutter/cupertino.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart'. Try removing the import directive • lib/features/doctor/edit_doctor_profile_page.dart:1:8 • unnecessary_import
+warning • Unused import: 'package:healthcare/features/auth/nurse_update_password_page.dart'. Try removing the import directive • lib/features/doctor/edit_doctor_profile_page.dart:5:8 • unused_import
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/doctor/edit_doctor_profile_page.dart:35:7 • avoid_print
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/doctor/edit_doctor_profile_page.dart:67:21 • use_build_context_synchronously
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/doctor/pataint_details.dart:186:9 • avoid_print
+   info • Unnecessary use of multiple underscores. Try using '_' • lib/features/doctor/pataint_list.page.dart:128:49 • unnecessary_underscores
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/doctor/pataint_list.page.dart:173:33 • deprecated_member_use
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/action_cards_section.dart:95:5 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/action_cards_section.dart:102:5 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/action_cards_section.dart:133:9 • avoid_print
+   info • 'desiredAccuracy' is deprecated and shouldn't be used. use settings parameter with AndroidSettings, AppleSettings, WebSettings, or LocationSettings. Try replacing the use of the deprecated member with the replacement • lib/features/duty/action_cards_section.dart:138:9 • deprecated_member_use
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/action_cards_section.dart:146:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/action_cards_section.dart:148:7 • avoid_print
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/action_cards_section.dart:376:38 • deprecated_member_use
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/active_visits_section.dart:12:5 • avoid_print
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/active_visits_section.dart:34:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/active_visits_section.dart:46:36 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/active_visits_section.dart:47:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/active_visits_section.dart:114:22 • deprecated_member_use
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/attendance.dart:50:7 • avoid_print
+warning • The value of the local variable 'icon' isn't used. Try removing the variable or using it • lib/features/duty/attendance.dart:215:18 • unused_local_variable
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/attendance.dart:241:26 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/attendance.dart:243:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/attendance.dart:340:24 • deprecated_member_use
+warning • The declaration '_AttendanceTile' isn't referenced. Try removing the declaration of '_AttendanceTile' • lib/features/duty/attendance.dart:369:7 • unused_element
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/duty/dashboard_page.dart:98:40 • use_build_context_synchronously
+warning • The declaration '_logout' isn't referenced. Try removing the declaration of '_logout' • lib/features/duty/dashboard_page.dart:127:16 • unused_element
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/dashboard_page.dart:194:13 • avoid_print
+warning • The declaration '_InfoCard' isn't referenced. Try removing the declaration of '_InfoCard' • lib/features/duty/dashboard_page.dart:310:7 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/dashboard_page.dart:329:27 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/dashboard_page.dart:331:46 • deprecated_member_use
+   info • The file name 'mainLangChang.dart' isn't a lower_case_with_underscores identifier. Try changing the name to follow the lower_case_with_underscores style • lib/features/duty/lang/mainLangChang.dart:1:1 • file_names
+   info • The file name 'pataintLanChang.dart' isn't a lower_case_with_underscores identifier. Try changing the name to follow the lower_case_with_underscores style • lib/features/duty/lang/pataintLanChang.dart:1:1 • file_names
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/duty/nurse_consent_page.dart:113:28 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/duty/nurse_consent_page.dart:127:9 • use_build_context_synchronously
+warning • The declaration '_pickSingle' isn't referenced. Try removing the declaration of '_pickSingle' • lib/features/duty/nurse_consent_page.dart:218:17 • unused_element
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/nurse_profile.dart:32:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/nurse_profile.dart:38:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/nurse_profile.dart:133:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/nurse_profile.dart:134:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/nurse_profile.dart:135:7 • avoid_print
+warning • The value of the local variable 'attendanceRecords' isn't used. Try removing the variable or using it • lib/features/duty/nurse_profile.dart:138:11 • unused_local_variable
+warning • The value of the local variable 'visits' isn't used. Try removing the variable or using it • lib/features/duty/nurse_profile.dart:139:11 • unused_local_variable
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/nurse_profile.dart:477:33 • deprecated_member_use
+warning • The declaration '_kpiCar8d' isn't referenced. Try removing the declaration of '_kpiCar8d' • lib/features/duty/nurse_profile.dart:689:10 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/nurse_profile.dart:694:33 • deprecated_member_use
+warning • The declaration '_buildSectionCard' isn't referenced. Try removing the declaration of '_buildSectionCard' • lib/features/duty/nurse_profile.dart:721:10 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/nurse_profile.dart:726:33 • deprecated_member_use
+   info • The import of 'package:flutter/cupertino.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart'. Try removing the import directive • lib/features/duty/nurse_profile_edit_page.dart:2:8 • unnecessary_import
+warning • Unused import: 'package:healthcare/features/auth/nurse_update_password_page.dart'. Try removing the import directive • lib/features/duty/nurse_profile_edit_page.dart:4:8 • unused_import
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/duty/nurse_profile_edit_page.dart:189:21 • use_build_context_synchronously
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/profile_header_section.dart:26:5 • avoid_print
+warning • The value of the local variable 'p' isn't used. Try removing the variable or using it • lib/features/duty/profile_header_section.dart:28:18 • unused_local_variable
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/profile_header_section.dart:141:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/profile_header_section.dart:176:48 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/duty/register.dart:149:9 • use_build_context_synchronously
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/register.dart:153:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/visit_page.dart:28:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/visit_page.dart:407:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/visit_page.dart:427:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/visit_page.dart:440:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/visit_page.dart:445:7 • avoid_print
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/duty/visit_page.dart:446:7 • avoid_print
+warning • The declaration '_openVitalsDetails' isn't referenced. Try removing the declaration of '_openVitalsDetails' • lib/features/duty/visit_page.dart:531:8 • unused_element
+warning • The declaration '_previousVitalsDropdown' isn't referenced. Try removing the declaration of '_previousVitalsDropdown' • lib/features/duty/visit_page.dart:649:10 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/visit_page.dart:768:22 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/weekly_work_graph.dart:26:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/duty/weekly_work_graph.dart:97:36 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/pataint/myComplaint.page.dart:48:21 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/pataint/myComplaint.page.dart:51:28 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/pataint/myComplaint.page.dart:56:9 • use_build_context_synchronously
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre. Try replacing the use of the deprecated member with the replacement • lib/features/pataint/myComplaint.page.dart:143:17 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/pataint/myComplaint.page.dart:231:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/pataint/myComplaint.page.dart:248:45 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/pataint/patain.profile.dart:313:9 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/pataint/patain.profile.dart:327:28 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/pataint/patain.profile.dart:335:9 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/pataint/patain.profile.dart:383:56 • deprecated_member_use
+   info • Unnecessary use of multiple underscores. Try using '_' • lib/features/pataint/patain.profile.dart:400:35 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores. Try using '_' • lib/features/pataint/patain.profile.dart:400:39 • unnecessary_underscores
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/pataint/patain.profile.dart:604:9 • avoid_print
+   info • The import of 'package:flutter/cupertino.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart'. Try removing the import directive • lib/features/pataint/patient_update_profile_page.dart:2:8 • unnecessary_import
+warning • Unused import: 'package:healthcare/features/auth/nurse_update_password_page.dart'. Try removing the import directive • lib/features/pataint/patient_update_profile_page.dart:8:8 • unused_import
+   info • Don't invoke 'print' in production code. Try using a logging framework • lib/features/pataint/patient_update_profile_page.dart:62:7 • avoid_print
+warning • The declaration '_addDocument' isn't referenced. Try removing the declaration of '_addDocument' • lib/features/pataint/patient_update_profile_page.dart:83:16 • unused_element
+warning • The declaration '_replaceDocument' isn't referenced. Try removing the declaration of '_replaceDocument' • lib/features/pataint/patient_update_profile_page.dart:111:16 • unused_element
+warning • The declaration '_deleteDocument' isn't referenced. Try removing the declaration of '_deleteDocument' • lib/features/pataint/patient_update_profile_page.dart:138:16 • unused_element
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/pataint/patient_update_profile_page.dart:176:21 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/patient/patient_details_page.dart:64:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/patient/patient_details_page.dart:96:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/patient/patient_details_page.dart:178:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/patient/patients_list_page.dart:173:22 • deprecated_member_use
+warning • The value of the local variable 'color' isn't used. Try removing the variable or using it • lib/features/patient/patients_page.dart:139:11 • unused_local_variable
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/patient/patients_page.dart:274:22 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/patient/vitals_entry_page.dart:35:19 • use_build_context_synchronously
+   info • Missing type annotation. Try adding a type annotation • lib/features/sos/patient_search_delegate.dart:37:16 • strict_top_level_inference
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/features/sos/sos_page.dart:232:21 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext • lib/features/staff/staff_profile_complaints_page.dart:168:15 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/staff/staff_profile_complaints_page.dart:250:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/staff/staff_profile_complaints_page.dart:352:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/staff/staff_profile_page.dart:82:37 • deprecated_member_use
+   info • Unnecessary use of multiple underscores. Try using '_' • lib/features/staff/staff_profile_page.dart:261:37 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores. Try using '_' • lib/features/staff/staff_profile_page.dart:261:41 • unnecessary_underscores
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement • lib/features/staff/staff_profile_page.dart:345:48 • deprecated_member_use
+
+132 issues found. (ran in 10.1s)
+
+---- summary ----
+exit code : 1
+errors    : 0
+warnings  : 19

@@ -4,6 +4,7 @@ import 'package:healthcare/core/network/api_client.dart';
 import 'package:healthcare/core/storage/token_storage.dart';
 import 'package:healthcare/core/storage/payment_storage.dart';
 import 'package:healthcare/core/theme/app_theme.dart';
+import 'package:healthcare/features/attendance/attendance_card.dart';
 import 'package:healthcare/features/duty/nurse_profile.dart';
 import 'package:healthcare/features/payment/payment_verification_page.dart';
 
@@ -23,6 +24,9 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   Future<Map<String, dynamic>>? _dashboardFuture;
   bool _checkingConsent = true;
+
+  /// Pull-to-refresh par attendance card ko bhi dobara load karwane ke liye.
+  int _attendanceTick = 0;
 
   @override
   void initState() {
@@ -193,6 +197,7 @@ class _DashboardPageState extends State<DashboardPage> {
               onRefresh: () async {
                 setState(() {
                   _dashboardFuture = DashboardService.fetchDashboard();
+                  _attendanceTick++;
                 });
               },
               child: CustomScrollView(
@@ -226,6 +231,16 @@ class _DashboardPageState extends State<DashboardPage> {
                             );
                           },
                         ),
+                      ),
+                    ),
+                  ),
+
+                  /// 🙂 FACE ATTENDANCE
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                      child: AttendanceCard(
+                        key: ValueKey('attendance-$_attendanceTick'),
                       ),
                     ),
                   ),

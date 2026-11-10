@@ -54,7 +54,7 @@ on:
     #  manually run trigger nahi ho sakta - push hi trigger hai.)
     # .aab deliver hone ke baad ye branch filter hata denge.
     branches:
-      - arena/01a10c30-wecare-app
+      - arena/ed1f36ce-wecare-app
     tags:
       - "v*"
 
@@ -333,6 +333,42 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
+      # ---------------------------------------------------------------
+      #  flutter analyze ka poora output file me likh dete hain.
+      #  Ye step kabhi fail nahi karta (warnings/infos purane code me
+      #  bhi hain). Asli gate neeche `flutter build` hai. Report branch
+      #  par commit ho jaati hai - Actions logs sandbox se download
+      #  nahi hote, isliye git hi feedback channel hai.
+      # ---------------------------------------------------------------
+      - name: Flutter analyze
+        run: |
+          set +e
+          flutter analyze --no-pub > analyze-report.txt 2>&1
+          CODE=$?
+          ERRORS=$(grep -cE "^[[:space:]]*error " analyze-report.txt)
+          WARNS=$(grep -cE "^[[:space:]]*warning " analyze-report.txt)
+          {
+            echo ""
+            echo "---- summary ----"
+            echo "exit code : $CODE"
+            echo "errors    : $ERRORS"
+            echo "warnings  : $WARNS"
+          } >> analyze-report.txt
+          echo "errors=$ERRORS  warnings=$WARNS  exit=$CODE"
+          {
+            echo "### flutter analyze"
+            echo ""
+            echo "errors: \`$ERRORS\` | warnings: \`$WARNS\`"
+            echo ""
+            echo '```'
+            grep -E "^[[:space:]]*(error|warning) " analyze-report.txt | head -n 60
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::warning::flutter analyze me $ERRORS error hain - build fail hoga"
+          fi
+          exit 0
+
       - name: Resolve version
         id: version
         env:
@@ -514,20 +550,24 @@ jobs:
 
       # signing-report.txt branch par commit karo (agent ise git se padh sake,
       # kyunki Actions logs/artifacts sandbox se reachable nahi hain)
-      - name: Commit signing report
+      - name: Commit build reports
         if: always() && github.ref_type == 'branch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          [ -f signing-report.txt ] || exit 0
-          echo "release: ${RELEASE_URL:-n/a}" >> signing-report.txt
+          set +e
+          [ -f signing-report.txt ] && \
+            echo "release: ${RELEASE_URL:-n/a}" >> signing-report.txt
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f signing-report.txt
+          for f in signing-report.txt analyze-report.txt; do
+            [ -f "$f" ] && git add -f "$f"
+          done
           git diff --staged --quiet && exit 0
-          git commit -q -m "ci: signing report for run ${GITHUB_RUN_NUMBER} [skip ci]"
+          git commit -q -m "ci: build reports for run ${GITHUB_RUN_NUMBER} [skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}" >/dev/null 2>&1
           git push origin "HEAD:${GITHUB_REF_NAME}"
+          exit 0
 
       # ---------------------------------------------------------------
       - name: Cleanup secrets from runner
