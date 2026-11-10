@@ -13,14 +13,16 @@ Play Store ke liye **signed AAB / APK** GitHub Actions se banane ka tarika.
 
 ## ⬇️ Latest build — ready to upload
 
-**[Build #5 — v1.1.0 (versionCode 10)](https://github.com/Mr-argha-das/wecare-app/releases/tag/build-5)**
+**[Build #6 — v1.2.0 (versionCode 11)](https://github.com/Mr-argha-das/wecare-app/releases/tag/build-6)** — *face attendance wala build*
 
 | File | Size | Kya karein |
 |---|---|---|
-| [`wecare-1.1.0-10-run5.aab`](https://github.com/Mr-argha-das/wecare-app/releases/download/build-5/wecare-1.1.0-10-run5.aab) | 59 MB | **Play Console me upload karein** |
-| [`wecare-1.1.0-10-run5.apk`](https://github.com/Mr-argha-das/wecare-app/releases/download/build-5/wecare-1.1.0-10-run5.apk) | 62 MB | Phone me direct install / testing |
+| [`wecare-1.2.0-11-run6.aab`](https://github.com/Mr-argha-das/wecare-app/releases/download/build-6/wecare-1.2.0-11-run6.aab) | 60 MB | **Play Console me upload karein** |
+| [`wecare-1.2.0-11-run6.apk`](https://github.com/Mr-argha-das/wecare-app/releases/download/build-6/wecare-1.2.0-11-run6.apk) | 63 MB | Phone me direct install / testing |
 
-<sub>Purani build: [build-4 — v1.0.9 (versionCode 9)](https://github.com/Mr-argha-das/wecare-app/releases/tag/build-4)</sub>
+<sub>Purani builds: [build-5 — v1.1.0 (code 10)](https://github.com/Mr-argha-das/wecare-app/releases/tag/build-5) · [build-4 — v1.0.9 (code 9)](https://github.com/Mr-argha-das/wecare-app/releases/tag/build-4)</sub>
+
+<sub>Is build me naya kya hai: **face attendance** — dekhein [`FACE_ATTENDANCE.md`](FACE_ATTENDANCE.md)</sub>
 
 ### Signature verified ✅
 
@@ -43,7 +45,7 @@ FINAL: PASS
 
 ### versionCode
 
-`pubspec.yaml` me `version: 1.1.0+10` hai, yaani **versionName 1.1.0 / versionCode 10**.
+`pubspec.yaml` me `version: 1.2.0+11` hai, yaani **versionName 1.2.0 / versionCode 11**.
 Play Store har naye upload ke liye pichhle se **bada** versionCode maangta hai —
 agli baar `pubspec.yaml` me version badha dein, ya `build_number` input use karein.
 
